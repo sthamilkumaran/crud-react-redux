@@ -7,16 +7,39 @@ const initialState = {
     error : ''
 }
 
+const BASE_URL = 'http://localhost:8000/tasks'
+
 //get.......>
 export const getTasksFromServer = createAsyncThunk(
     "tasks/getTasksFromServer",
     async (_,{rejectWithValue}) => {
-        const response = await fetch('http://localhost:8000/tasks')
+        const response = await fetch(BASE_URL)
         if (response.ok) {
             const jsonResponse = await response.json()
             return jsonResponse
         }else{
             return rejectWithValue({error:'No Tasks Found'})
+        }
+    }
+)
+
+//post.......>
+export const addTasksToServer = createAsyncThunk(
+    "tasks/addTasksToServer",
+    async (task,{rejectWithValue}) => {
+        const options = {
+            method: 'POST',
+            body: JSON.stringify(task),
+            headers:{
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        }
+        const response = await fetch(BASE_URL,options)
+        if (response.ok) {
+            const jsonResponse = await response.json()
+            return jsonResponse
+        }else{
+            return rejectWithValue({error:'Task Not Added'})
         }
     }
 )
@@ -57,6 +80,19 @@ const tasksSlice = createSlice({
                 state.error = action.payload.error
                 state.isLoading = false
                 state.tasksList = []
+            })
+
+            .addCase(addTasksToServer.pending,(state) => {
+                state.isLoading = true
+            })
+            .addCase(addTasksToServer.fulfilled,(state,action) => {
+                state.isLoading = false
+                state.error = ''
+                state.tasksList.push(action.payload)
+            })
+            .addCase(addTasksToServer.rejected,(state,action) => {
+                state.error = action.payload.error
+                state.isLoading = false
             })
     }
 })
